@@ -1,0 +1,17 @@
+{
+  "name": "real-time-whiteboard-sharing-app",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "Abhinav Ghosh",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
