@@ -2,7 +2,7 @@ import "./index.css";
 import { useRef, useState } from "react";
 import WhiteBoard from "../../Components/Whiteboard";
 
-const RoomPage = () => {
+const RoomPage = ({user,socket, users}) => {
 
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
@@ -11,6 +11,7 @@ const RoomPage = () => {
     const [color, setColor] = useState("#000000");
     const [elements, setElements] = useState([]);
     const [history, setHistory] = useState([]);
+    const [openUserTab, setOpenUserTab] = useState(false);
 
     const handleClearCanvas = () => {
         const canvas = canvasRef.current;
@@ -29,11 +30,39 @@ const RoomPage = () => {
         setHistory((prevHistory) => prevHistory.slice(0, prevHistory.length - 1));
     }
     return ( 
-        <div className="row">      
+        <div className="row">  
+            <button className="btn btn-dark"
+            style={{
+                display:"block",
+                position:"absolute",
+                top:"5%",
+                left:"5%",
+                height:"40px",
+                width:"100px"
+            }} onClick={() => setOpenUserTab(true)}>
+                Users
+            </button> 
+            {openUserTab && (
+                <div className="position-fixed top-0 h-100 text-white bg-dark"
+                style={{width:"250px" , left:"0%"}}> 
+                <button type="button" className="btn btn-light btn-block w-100 mt-5" onClick={() => setOpenUserTab(false)}>
+                    Close
+                </button>
+                <div className="w-100 mt-5 pt-5">
+                {users.map((usr,index) => (
+                    <p key={index* 999} className="my-2 text-center w-100">
+                        {usr.name}{user && usr.userId === user.userId ? " (You)" : ""}
+                    </p>
+                ))}
+                </div>
+                </div>
+            )}
             <h1 className="text-center py-4">
-                White Board Sharing App <span className="text-primary">[Users Online:0]</span>
+                White Board Sharing App <span className="text-primary">[Users Online:{users.length}]</span>
             </h1>
-            <div className="col-md-12 mx-auto px-5 mb-5">
+            {
+                user && user.presenter && (
+                    <div className="col-md-12 mx-auto px-5 mb-5">
                 <div className="d-flex flex-wrap align-items-center justify-content-center gap-4">
                     {/* Drawing Tools */}
                     <div className="d-flex gap-3 align-items-center">
@@ -65,9 +94,12 @@ const RoomPage = () => {
                     </div>
                 </div>
             </div>
+                )
+            }
+            
             <div className="col-md-10 border mx-auto mt-4 canvas-box">
                 <WhiteBoard canvasRef={canvasRef} ctxRef={ctxRef} elements={elements} setElements={setElements} 
-                            color={color} tool={tool}/>
+                            color={color} tool={tool} user={user} socket={socket}/>
             </div>
         </div>
     )

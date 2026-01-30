@@ -9,10 +9,34 @@ const WhiteBoard = ({
     elements,
     setElements,
     tool,
-    color
+    color,
+    user,
+    socket
 }) => {
+    const [img, setImg] = useState(null);
+
+    useEffect(() => {
+        socket.on("WhiteBoardDataResponse", (data) => {
+            setImg(data.imgURL);
+        });
+    }, []);
+
+
+    if (!user?.presenter) {
+        return (
+            <div
+                className="canvas-box border border-dark border-3">
+                <img src={img} alt="Real time white board image shared by presenter"
+                    style={{
+                        height:window.innerHeight,
+                        width :"150%"
+                    }} />
+            </div>
+        )
+    }
 
     const [isDrawing, setIsDrawing] = useState(false);
+    
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -32,25 +56,29 @@ const WhiteBoard = ({
     }, [color]);
 
     useLayoutEffect(() => {
+        if(canvasRef){
         const roughCanvas = rough.canvas(canvasRef.current);
 
-        if(elements.length > 0) {
+        if (elements.length > 0) {
             ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
 
         elements.forEach((element) => {
             if (element.type === "pencil") {
-                roughCanvas.linearPath(element.path , { stroke: element.stroke , strokeWidth: 4 , roughness: 0 });
+                roughCanvas.linearPath(element.path, { stroke: element.stroke, strokeWidth: 4, roughness: 0 });
             }
             else if (element.type === "line") {
-                roughCanvas.draw(roughGenerator.line(element.offsetX, element.offsetY, element.width, element.height ,{ stroke: element.stroke , strokeWidth: 4 , roughness: 0 }));
+                roughCanvas.draw(roughGenerator.line(element.offsetX, element.offsetY, element.width, element.height, { stroke: element.stroke, strokeWidth: 4, roughness: 0 }));
             }
             else if (element.type === "rect") {
-                roughCanvas.draw(roughGenerator.rectangle(element.offsetX, element.offsetY, element.width - element.offsetX, element.height - element.offsetY ,{ stroke: element.stroke , strokeWidth: 4 , roughness: 0 }));
+                roughCanvas.draw(roughGenerator.rectangle(element.offsetX, element.offsetY, element.width - element.offsetX, element.height - element.offsetY, { stroke: element.stroke, strokeWidth: 4, roughness: 0 }));
             }
 
         });
-    }, [elements]);
+
+        const canvasImage = canvasRef.current.toDataURL("image/png");
+        socket.emit("whiteboardData", canvasImage);
+    }}, [elements]);
 
     const handleMouseDown = (e) => {
         const { offsetX, offsetY } = e.nativeEvent;
@@ -82,7 +110,7 @@ const WhiteBoard = ({
         if (isDrawing) {
             if (tool === "pencil") {
                 const { path } = elements[elements.length - 1];
-            const newPath = [...path, [offsetX, offsetY]];
+                const newPath = [...path, [offsetX, offsetY]];
                 setElements((prevElements) =>
                     prevElements.map((ele, index) => {
                         if (index === prevElements.length - 1) {
@@ -121,21 +149,23 @@ const WhiteBoard = ({
         }
     }
 
-        const handleMouseUp = (e) => {
-            setIsDrawing(false);
-        }
+    const handleMouseUp = (e) => {
+        setIsDrawing(false);
+    }
 
-        return (
-            <div
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                className="canvas-box border border-dark border-3">
+    
+
+    return (
+        <div
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            className="canvas-box border border-dark border-3">
             <canvas
                 ref={canvasRef}>
             </canvas>
-            </div>
-        )
-    }
+        </div>
+    )
+}
 
-    export default WhiteBoard;
+export default WhiteBoard;
